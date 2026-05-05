@@ -1,0 +1,22 @@
+{
+  "name": "Mine",
+  "short_name": "Mine",
+  "description": "Share moments with friends, chat privately.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#7c6cfc",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/7c6cfc/ffffff?text=M",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/7c6cfc/ffffff?text=M",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
