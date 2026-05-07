@@ -1,13 +1,12 @@
-// Share App Service Worker v8
-const CACHE_VERSION = 'share-v8';
+// Share App Service Worker v9
+const CACHE_VERSION = 'share-v9';
 
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/icon-192.png',
-  '/icon-512.png',
-  '/screenshot.png'
+  '/icon-512.png'
 ];
 
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
@@ -47,44 +46,62 @@ self.addEventListener('notificationclick', event => {
   );
 });
 
-// Install - cache static assets
+// Install - pre-cache everything
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE_VERSION).then(cache => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_VERSION).then(cache => {
+      return Promise.allSettled(
+        STATIC_ASSETS.map(url =>
+          fetch(url).then(res => {
+            if (res.ok) cache.put(url, res);
+          })
+        )
+      );
+    })
   );
   self.skipWaiting();
 });
 
-// Activate - clear old caches
+// Activate - clean old caches
 self.addEventListener('activate', e => e.waitUntil(
   caches.keys().then(keys =>
     Promise.all(keys.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k)))
   ).then(() => self.clients.claim())
 ));
 
-// Fetch - serve from cache, fallback to network
+// Fetch - cache first, fallback to network, fallback to index.html
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  if (e.request.url.includes('firestore') || 
+  if (e.request.url.includes('firestore') ||
       e.request.url.includes('firebase') ||
-      e.request.url.includes('googleapis')) return;
+      e.request.url.includes('googleapis') ||
+      e.request.url.includes('gstatic')) return;
 
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      return cached || fetch(e.request).then(response => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_VERSION).then(cache => cache.put(e.request, clone));
-        }
-        return response;
-      });
-    }).catch(() => caches.match('/index.html'))
+    caches.open(CACHE_VERSION).then(cache =>
+      cache.match(e.request).then(cached => {
+        const networkFetch = fetch(e.request).then(response => {
+          if (response && response.ok) {
+            cache.put(e.request, response.clone());
+          }
+          return response;
+        }).catch(() => cached || caches.match('/index.html'));
+        return cached || networkFetch;
+      })
+    )
   );
 });
 
 // Background Sync
 self.addEventListener('sync', e => {
   if (e.tag === 'background-sync') {
+    e.waitUntil(Promise.resolve());
+  }
+});
+
+// Periodic Sync
+self.addEventListener('periodicsync', e => {
+  if (e.tag === 'periodic-sync') {
     e.waitUntil(Promise.resolve());
   }
 });
