@@ -1,5 +1,5 @@
-// Share App Service Worker v11
-const CACHE_VERSION = 'share-v11';
+// Share App Service Worker v12
+const CACHE_VERSION = 'share-v12';
 
 const STATIC_ASSETS = [
   '/',
@@ -51,13 +51,7 @@ self.addEventListener('notificationclick', event => {
 // ── INSTALL - cache static assets ──
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE_VERSION).then(cache => {
-      return Promise.allSettled(
-        STATIC_ASSETS.map(url =>
-          fetch(url).then(res => { if (res.ok) cache.put(url, res); })
-        )
-      );
-    })
+    caches.open(CACHE_VERSION).then(cache => cache.addAll(STATIC_ASSETS))
   );
   self.skipWaiting();
 });
@@ -73,20 +67,24 @@ self.addEventListener('activate', e => e.waitUntil(
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
-  // Handle navigation requests explicitly (required for offline support detection)
+  // Cache-first for navigation — required for offline support
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      fetch(e.request).catch(() => caches.match('/index.html'))
+      caches.match('/index.html').then(cached =>
+        cached || fetch(e.request).catch(() => caches.match('/index.html'))
+      )
     );
     return;
   }
 
+  // Skip Firebase, Cloudinary and other external requests
   if (e.request.url.includes('firestore') ||
       e.request.url.includes('firebase') ||
       e.request.url.includes('googleapis') ||
       e.request.url.includes('gstatic') ||
       e.request.url.includes('cloudinary')) return;
 
+  // Cache-first for everything else
   e.respondWith(
     caches.open(CACHE_VERSION).then(cache =>
       cache.match(e.request).then(cached => {
