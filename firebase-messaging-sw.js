@@ -1,5 +1,5 @@
-// Share App Service Worker v10
-const CACHE_VERSION = 'share-v10';
+// Share App Service Worker v11
+const CACHE_VERSION = 'share-v11';
 
 const STATIC_ASSETS = [
   '/',
@@ -72,6 +72,15 @@ self.addEventListener('activate', e => e.waitUntil(
 // ── FETCH - offline support ──
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+
+  // Handle navigation requests explicitly (required for offline support detection)
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
   if (e.request.url.includes('firestore') ||
       e.request.url.includes('firebase') ||
       e.request.url.includes('googleapis') ||
