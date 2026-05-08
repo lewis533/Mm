@@ -1,5 +1,5 @@
-// Share App Service Worker v12
-const CACHE_VERSION = 'share-v12';
+// Share App Service Worker v13
+const CACHE_VERSION = 'share-v13';
 
 const STATIC_ASSETS = [
   '/',
@@ -41,9 +41,9 @@ self.addEventListener('notificationclick', event => {
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       for (const c of list) {
-        if (c.url.includes('lewshare.vercel.app') && 'focus' in c) return c.focus();
+        if (c.url.includes('lewishare.vercel.app') && 'focus' in c) return c.focus();
       }
-      if (clients.openWindow) return clients.openWindow('https://lewshare.vercel.app');
+      if (clients.openWindow) return clients.openWindow('https://lewishare.vercel.app');
     })
   );
 });
