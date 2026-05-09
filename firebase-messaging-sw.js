@@ -1,5 +1,5 @@
-// Share App Service Worker v15
-const CACHE_VERSION = 'share-v15';
+// Share App Service Worker v16
+const CACHE_VERSION = 'share-v16';
 
 const STATIC_ASSETS = [
   '/',
