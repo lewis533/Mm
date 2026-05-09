@@ -1,6 +1,6 @@
-// Share App Service Worker v19
+// Share App Service Worker v20
 // FIX #2: Bump version on every deploy to force update
-const CACHE_VERSION = 'share-v19';
+const CACHE_VERSION = 'share-v20';
 
 const STATIC_ASSETS = [
   '/',
